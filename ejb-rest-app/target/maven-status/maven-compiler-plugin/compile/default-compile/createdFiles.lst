@@ -1,0 +1,16 @@
+com\nada\service\AdminService.class
+com\nada\service\UserService.class
+com\nada\resource\CustomerResource.class
+com\nada\service\CustomerService.class
+com\nada\service\DishesRepService.class
+com\nada\model\Customer.class
+com\nada\DBConnection.class
+com\nada\model\User.class
+com\nada\resource\DishesRepResource.class
+com\nada\util\PasswordGenerator.class
+com\nada\model\DishesRepresentative.class
+com\nada\resource\AdminResource.class
+com\nada\dto\UserDetailsDTO.class
+com\nada\resource\UserResource.class
+com\nada\RestApp.class
+com\nada\CORSFilter.class

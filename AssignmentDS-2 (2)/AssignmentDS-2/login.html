@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Login</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
+
+    html, body {
+      margin: 0; padding: 0; height: 100%;
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+      overflow-y: auto;
+    }
+
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+      min-height: 100vh;
+      position: relative;
+      box-sizing: border-box;
+    }
+
+    body::before, body::after {
+      content: '';
+      position: fixed;
+      border-radius: 50%;
+      opacity: 0.15;
+      filter: blur(80px);
+      animation: float 6s ease-in-out infinite alternate;
+      z-index: 0;
+    }
+    body::before {
+      width: 250px;
+      height: 250px;
+      background: #ff6f91;
+      top: 10%;
+      left: 5%;
+      animation-delay: 0s;
+    }
+    body::after {
+      width: 350px;
+      height: 350px;
+      background: #845ec2;
+      bottom: 10%;
+      right: 5%;
+      animation-delay: 3s;
+    }
+    @keyframes float {
+      0% { transform: translateY(0); }
+      100% { transform: translateY(30px); }
+    }
+
+    .container {
+      position: relative;
+      background: #ffffffdd;
+      border-radius: 28px;
+      padding: 40px 30px;
+      width: 100%;
+      max-width: 420px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+      z-index: 1;
+      backdrop-filter: saturate(180%) blur(20px);
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    h2 {
+      font-weight: 600;
+      font-size: 2rem;
+      margin-bottom: 25px;
+      color: #333;
+      text-align: center;
+      letter-spacing: 1.1px;
+      text-transform: uppercase;
+      text-shadow: 0 1px 2px #fcb69f;
+      word-break: break-word;
+    }
+
+    select, input[type="email"], input[type="password"] {
+      width: 100%;
+      padding: 14px 20px;
+      margin-bottom: 20px;
+      border: none;
+      border-radius: 50px;
+      background: #fff;
+      box-shadow: inset 2px 2px 5px #f0f0f0,
+                  inset -2px -2px 5px #d1d9e6;
+      font-size: 1rem;
+      transition: all 0.3s ease;
+      outline: none;
+      box-sizing: border-box;
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      appearance: none;
+      cursor: pointer;
+    }
+    select:disabled {
+      background: #eee;
+      color: #aaa;
+      cursor: not-allowed;
+    }
+    select:focus,
+    input[type="email"]:focus,
+    input[type="password"]:focus {
+      box-shadow:
+        inset 4px 4px 8px #e9e9ff,
+        inset -4px -4px 8px #ffffff;
+      background: #fefefe;
+      transform: scale(1.02);
+    }
+
+    button {
+      width: 100%;
+      padding: 16px 0;
+      border-radius: 50px;
+      border: none;
+      background: linear-gradient(45deg, #ff6f91, #845ec2);
+      color: white;
+      font-weight: 700;
+      font-size: 1.2rem;
+      letter-spacing: 1.2px;
+      cursor: pointer;
+      box-shadow: 0 5px 15px rgba(255,111,145,0.6);
+      transition: all 0.4s ease;
+      margin-top: 10px;
+    }
+    button:hover {
+      background: linear-gradient(45deg, #845ec2, #ff6f91);
+      box-shadow: 0 8px 24px rgba(132,94,194,0.8);
+      transform: translateY(-3px);
+    }
+
+    #result {
+      margin-top: 18px;
+      font-weight: 600;
+      text-align: center;
+      min-height: 28px;
+      font-size: 1rem;
+      color: #d8000c;
+      user-select: none;
+    }
+
+    @media (max-width: 450px) {
+      .container {
+        padding: 30px 20px;
+      }
+      h2 {
+        font-size: 1.7rem;
+      }
+      button {
+        font-size: 1rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Login</h2>
+    <select id="role">
+      <option value="admin">Admin</option>
+      <option value="customer">Customer</option>
+      <option value="dishesRep">Dishes Representative</option>
+    </select>
+
+    <input type="email" id="email" placeholder="Email" required>
+    <input type="password" id="password" placeholder="Password" required>
+
+    <button onclick="loginUser()">Login</button>
+
+    <p id="result"></p>
+  </div>
+
+ <script>
+function loginUser() {
+  const email = document.getElementById("email").value.trim();
+  const password = document.getElementById("password").value.trim();
+  const role = document.getElementById("role").value;
+  const result = document.getElementById("result");
+
+  if (!email || !password) {
+    result.textContent = "❌ Please enter both email and password.";
+    return;
+  }
+
+  // Clear old sessions
+  localStorage.clear();
+
+  let endpoint = "";
+  if (role === "admin") {
+    endpoint = "http://localhost:8080/ejb-rest-app-1.0/api/admin/login";
+  } else if (role === "customer") {
+    endpoint = "http://localhost:8080/ejb-rest-app-1.0/api/customers/login";
+  } else if (role === "dishesRep") {
+    endpoint = "http://localhost:8080/ejb-rest-app-1.0/api/dishes-reps/login";
+  } else {
+    result.textContent = "❌ Unsupported role selected.";
+    return;
+  }
+
+  fetch(endpoint, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, password })
+  })
+  .then(response => response.text()) // Get raw response text
+  .then(text => {
+    console.log('Raw response:', text); // Log the raw response to see what is being returned
+    try {
+      const data = JSON.parse(text); // Attempt to parse the JSON response
+      if (data.status === "success") {
+  if (role === "admin") {
+    localStorage.setItem("adminId", data.userId);
+    localStorage.setItem("adminUsername", data.username);
+    window.location.href = "admin-dashboard.html";
+  } else if (role === "customer") {
+    localStorage.setItem("customerId", data.userId);
+    localStorage.setItem("customerUsername", data.username);
+    window.location.href = "customer-dashboard.html";
+  } else if (role === "dishesRep") {
+    // ✅ Store the real rep table ID instead of userId
+    localStorage.setItem("dishesRepId", data.repTableId);
+    localStorage.setItem("dishesRepUsername", data.username);
+    window.location.href = "dishes-rep-dashboard.html";
+  }
+} else {
+  if (data.error === "Email not found") {
+    result.textContent = "❌ The email address is not registered.";
+  } else if (data.error === "Wrong password") {
+    result.textContent = "❌ The password you entered is incorrect.";
+  } else {
+    result.textContent = "❌ " + (data.error || data.status || "Login failed.");
+  }
+}
+
+    } catch (error) {
+      console.error('Failed to parse JSON:', error);
+      result.textContent = "❌ Response is not valid JSON.";
+    }
+  })
+  .catch(error => {
+    console.error('Request failed:', error);
+    result.textContent = "❌ Login failed: " + error.message;
+  });
+}
+
+</script>
+ 
+</body>
+</html>

@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Create Order</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
+
+    html, body {
+      margin: 0; padding: 0; height: 100%;
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+      overflow-y: auto;
+    }
+
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 40px 20px;
+      min-height: 100vh;
+    }
+
+    .container {
+      background: #ffffffee;
+      border-radius: 24px;
+      padding: 35px;
+      width: 100%;
+      max-width: 600px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+      z-index: 1;
+      backdrop-filter: blur(20px);
+      text-align: center;
+    }
+
+    h2 {
+      font-size: 2rem;
+      margin-bottom: 25px;
+      color: #333;
+    }
+
+    .dish-block {
+      background: #fefefe;
+      padding: 20px;
+      border-radius: 20px;
+      margin-bottom: 15px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+    }
+
+    input {
+      width: 100%;
+      padding: 14px 20px;
+      margin-bottom: 15px;
+      border: none;
+      border-radius: 50px;
+      background: #fff;
+      box-shadow: inset 2px 2px 5px #f0f0f0,
+                  inset -2px -2px 5px #d1d9e6;
+      font-size: 1rem;
+      outline: none;
+      box-sizing: border-box;
+    }
+
+    button {
+      padding: 15px 30px;
+      font-size: 1.2rem;
+      font-weight: 600;
+      color: white;
+      border: none;
+      border-radius: 40px;
+      background: linear-gradient(to right, #ff6f91, #845ec2);
+      cursor: pointer;
+      box-shadow: 0 5px 15px rgba(255,111,145,0.6);
+      transition: background 0.3s ease, transform 0.3s ease;
+      margin: 10px 5px;
+    }
+
+    button:hover:enabled {
+      background: linear-gradient(to right, #845ec2, #ff6f91);
+      transform: translateY(-3px);
+    }
+
+    button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    #result {
+      margin-top: 18px;
+      font-weight: 600;
+      font-size: 1rem;
+      color: #d8000c;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Create New Order</h2>
+
+    <div id="dishContainer">
+      <div class="dish-block">
+        <input type="number" class="dishId" placeholder="Dish ID (e.g., 1)" min="1" required />
+        <input type="number" class="quantity" placeholder="Quantity (e.g., 2)" min="1" required />
+      </div>
+    </div>
+
+    <button onclick="addDishBlock()">➕ Add Another Dish</button>
+    <button id="submitBtn" onclick="submitOrder()">✅ Submit Order</button>
+
+    <p id="result"></p>
+  </div>
+
+  <script>
+    const customerId = localStorage.getItem("customerId");
+
+    if (!customerId) {
+      alert("No customer session found. Please log in again.");
+      window.location.href = "login.html";
+    }
+
+    function addDishBlock() {
+      const container = document.getElementById("dishContainer");
+      const block = document.createElement("div");
+      block.className = "dish-block";
+      block.innerHTML = `
+        <input type="number" class="dishId" placeholder="Dish ID (e.g., 1)" min="1" required />
+        <input type="number" class="quantity" placeholder="Quantity (e.g., 2)" min="1" required />
+      `;
+      container.appendChild(block);
+    }
+
+    function submitOrder() {
+      const dishIds = document.querySelectorAll(".dishId");
+      const quantities = document.querySelectorAll(".quantity");
+      const result = document.getElementById("result");
+      const submitBtn = document.getElementById("submitBtn");
+
+      result.textContent = "";
+      submitBtn.disabled = true;
+      submitBtn.textContent = "⏳ Submitting...";
+
+      const dishQuantities = [];
+
+      for (let i = 0; i < dishIds.length; i++) {
+        const dishId = parseInt(dishIds[i].value);
+        const quantity = parseInt(quantities[i].value);
+
+        if (!dishId || !quantity || quantity < 1) {
+          result.textContent = `❌ Invalid input in Dish #${i + 1}`;
+          submitBtn.disabled = false;
+          submitBtn.textContent = "✅ Submit Order";
+          return;
+        }
+
+        dishQuantities.push({ dishId, quantity });
+      }
+
+      const orderData = {
+        customerId: parseInt(customerId),
+        dishQuantities: dishQuantities
+      };
+
+      fetch("http://localhost:8082/api/orders", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(orderData)
+      })
+      .then(async res => {
+        const data = await res.json();
+        if (res.ok) {
+          result.style.color = "green";
+          result.textContent = "✅ Order placed successfully!";
+          submitBtn.disabled = false;
+          submitBtn.textContent = "✅ Submit Order";
+        } else {
+          result.style.color = "#d8000c";
+          result.textContent = "❌ " + (data.error || "Failed to place order.");
+          submitBtn.disabled = false;
+          submitBtn.textContent = "✅ Submit Order";
+        }
+      })
+      .catch(err => {
+        console.error(err);
+        result.textContent = "❌ Network error. Please try again.";
+        submitBtn.disabled = false;
+        submitBtn.textContent = "✅ Submit Order";
+      });
+    }
+  </script>
+</body>
+</html>

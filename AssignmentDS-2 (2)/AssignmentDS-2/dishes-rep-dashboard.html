@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Dishes Representative Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+      overflow-y: auto;
+    }
+
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 40px 20px;
+      min-height: 100vh;
+    }
+
+    .container {
+      background: #ffffffee;
+      border-radius: 24px;
+      padding: 35px;
+      width: 100%;
+      max-width: 1000px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+      backdrop-filter: blur(20px);
+      text-align: center;
+    }
+
+    h2 {
+      font-size: 2.2rem;
+      margin-bottom: 10px;
+      color: #333;
+    }
+
+    p {
+      font-size: 1rem;
+      margin-bottom: 20px;
+      color: #555;
+    }
+
+    .actions {
+      display: flex;
+      justify-content: center;
+      gap: 15px;
+      flex-wrap: wrap;
+      margin-bottom: 30px;
+    }
+
+    button {
+      padding: 10px 22px;
+      border-radius: 30px;
+      border: none;
+      background: linear-gradient(to right, #ff6f91, #845ec2);
+      color: #fff;
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      transition: 0.3s ease;
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+      background: linear-gradient(to right, #845ec2, #ff6f91);
+    }
+
+    #resultContainer {
+      margin-top: 30px;
+      text-align: left;
+    }
+
+    .dish-card {
+      background: #fff;
+      padding: 20px;
+      border-radius: 12px;
+      margin-bottom: 15px;
+      box-shadow: 0 3px 6px rgba(0,0,0,0.08);
+    }
+
+    .dish-title {
+      font-weight: 600;
+      margin-bottom: 10px;
+      font-size: 1rem;
+      color: #333;
+      line-height: 1.6;
+    }
+
+    .customer-info {
+      background-color: #f9f9f9;
+      padding: 12px 15px;
+      margin-top: 12px;
+      border-left: 4px solid #845ec2;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      line-height: 1.6;
+      color: #444;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2 id="welcomeMessage">Welcome, Dishes Rep!</h2>
+    <p>ID: <span id="repId">N/A</span></p>
+
+    <div class="actions">
+      <button onclick="goToAddDish()">➕ Add Dish</button>
+      <button onclick="viewMyDishes()">📋 View My Dishes</button>
+      <button onclick="viewSoldDishes()">🚚 View Sold Dishes</button>
+    </div>
+
+    <div id="resultContainer"></div>
+  </div>
+
+  <script>
+    const repUsername = localStorage.getItem("dishesRepUsername") || "Dishes Rep";
+    const repId = localStorage.getItem("dishesRepId") || "N/A";
+
+    document.getElementById("welcomeMessage").textContent = `Welcome, ${repUsername}!`;
+    document.getElementById("repId").textContent = repId;
+
+    function goToAddDish() {
+      window.location.href = "create-dish.html";
+    }
+
+    function goToUpdateDish(dishId) {
+      window.location.href = `update-dish.html?dishId=${dishId}`;
+    }
+
+    function viewMyDishes() {
+      const resultContainer = document.getElementById("resultContainer");
+      resultContainer.innerHTML = "<p>Loading dishes...</p>";
+
+      fetch(`http://localhost:8082/api/dishes/rep/${repId}`)
+        .then(res => res.json())
+        .then(data => {
+          if (!Array.isArray(data) || data.length === 0) {
+            resultContainer.innerHTML = "<p>No dishes found.</p>";
+            return;
+          }
+
+          let html = `<h3>🧾 My Dishes for Sale</h3>`;
+          data.forEach(dish => {
+            html += `
+              <div class="dish-card">
+                <div class="dish-title">
+                  <strong>ID:</strong> ${dish.id}<br>
+                  <strong>Name:</strong> ${dish.dishName}<br>
+                  <strong>Price:</strong> ${dish.price}<br>
+                  <strong>Available Quantity:</strong> ${dish.amount}
+                </div>
+                <button onclick="goToUpdateDish(${dish.id})">📝 Update</button>
+              </div>`;
+          });
+
+          resultContainer.innerHTML = html;
+        })
+        .catch(err => {
+          console.error(err);
+          resultContainer.innerHTML = `<p style="color:red;">❌ Failed to load dishes.</p>`;
+        });
+    }
+
+    async function viewSoldDishes() {
+      const resultContainer = document.getElementById("resultContainer");
+      resultContainer.innerHTML = "<p>Loading sold dishes...</p>";
+
+      try {
+        const res = await fetch(`http://localhost:8082/api/dishes/rep/${repId}/sold`);
+        const data = await res.json();
+
+        if (!Array.isArray(data) || data.length === 0) {
+          resultContainer.innerHTML = "<p>No sold dishes found.</p>";
+          return;
+        }
+
+        let html = `<h3>📦 Sold Dishes</h3>`;
+
+        for (const entry of data) {
+          const match = entry.match(/Dish: (.*?), Qty: (\d+), Price: ([\d.]+), Customer ID: (\d+), Shipper: (.*)/);
+          let customerInfo = "<span style='color:gray;'>Unavailable</span>";
+          let structured = {};
+
+          if (match) {
+            const [, dish, qty, price, customerId, shipper] = match;
+            structured = { dish, qty, price, customerId, shipper };
+
+            try {
+              const resUser = await fetch(`http://localhost:8080/ejb-rest-app-1.0/api/users/details/${customerId}`);
+              if (resUser.ok) {
+                const user = await resUser.json();
+                customerInfo = `
+                  <strong>Username:</strong> ${user.username}<br>
+                  <strong>Email:</strong> ${user.email}<br>
+                  <strong>Phone:</strong> ${user.phone}
+                `;
+              }
+            } catch (err) {
+              console.warn("Could not fetch customer info for ID " + customerId);
+            }
+
+            html += `
+              <div class="dish-card">
+                <div class="dish-title">
+                  <strong>Dish:</strong> ${structured.dish}<br>
+                  <strong>Quantity:</strong> ${structured.qty}<br>
+                  <strong>Price:</strong> ${structured.price}<br>
+                  <strong>Customer ID:</strong> ${structured.customerId}<br>
+                  <strong>Shipper:</strong> ${structured.shipper}
+                </div>
+                <div class="customer-info">${customerInfo}</div>
+              </div>`;
+          }
+        }
+
+        resultContainer.innerHTML = html;
+
+      } catch (error) {
+        console.error(error);
+        resultContainer.innerHTML = "<p style='color:red;'>❌ Failed to load sold dishes.</p>";
+      }
+    }
+  </script>
+</body>
+</html>

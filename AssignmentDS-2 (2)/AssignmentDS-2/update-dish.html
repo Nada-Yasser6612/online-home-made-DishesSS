@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Update Dish</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
+
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 40px 20px;
+      min-height: 100vh;
+      margin: 0;
+    }
+
+    .container {
+      background: #ffffffee;
+      border-radius: 24px;
+      padding: 30px;
+      width: 100%;
+      max-width: 500px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+      backdrop-filter: blur(20px);
+      text-align: center;
+    }
+
+    h2 {
+      color: #333;
+      margin-bottom: 25px;
+    }
+
+    input {
+      width: 100%;
+      padding: 14px;
+      margin-bottom: 15px;
+      border: none;
+      border-radius: 50px;
+      background: #fff;
+      box-shadow: inset 2px 2px 5px #f0f0f0,
+                  inset -2px -2px 5px #d1d9e6;
+      font-size: 1rem;
+      outline: none;
+      box-sizing: border-box;
+    }
+
+    button {
+      padding: 14px 30px;
+      border-radius: 40px;
+      border: none;
+      background: linear-gradient(to right, #ff6f91, #845ec2);
+      color: white;
+      font-weight: 600;
+      font-size: 1.1rem;
+      cursor: pointer;
+      box-shadow: 0 5px 15px rgba(255,111,145,0.6);
+      transition: 0.3s ease;
+    }
+
+    button:hover {
+      background: linear-gradient(to right, #845ec2, #ff6f91);
+      transform: translateY(-2px);
+    }
+
+    #result {
+      margin-top: 15px;
+      font-weight: bold;
+      font-size: 1rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Update Dish Info</h2>
+    <input type="number" id="amount" placeholder="New Amount (optional)" min="1" />
+    <input type="number" id="price" placeholder="New Price (optional)" min="0.01" step="0.01" />
+    <button onclick="updateDish()">📝 Update Dish</button>
+    <p id="result"></p>
+  </div>
+
+  <script>
+    const dishId = new URLSearchParams(window.location.search).get("dishId");
+    const result = document.getElementById("result");
+
+    if (!dishId) {
+      result.textContent = "❌ Dish ID not provided.";
+      result.style.color = "red";
+    }
+
+    function updateDish() {
+      const amountVal = document.getElementById("amount").value;
+      const priceVal = document.getElementById("price").value;
+
+      const params = new URLSearchParams();
+
+      if (amountVal) {
+        const amount = parseInt(amountVal);
+        if (isNaN(amount) || amount < 1) {
+          result.textContent = "❌ Invalid amount.";
+          result.style.color = "red";
+          return;
+        }
+        params.append("amount", amount);
+      }
+
+      if (priceVal) {
+        const price = parseFloat(priceVal);
+        if (isNaN(price) || price <= 0) {
+          result.textContent = "❌ Invalid price.";
+          result.style.color = "red";
+          return;
+        }
+        params.append("price", price);
+      }
+
+      if (!params.toString()) {
+        result.textContent = "❌ Please enter amount or price to update.";
+        result.style.color = "red";
+        return;
+      }
+
+      fetch(`http://localhost:8082/api/dishes/${dishId}?${params.toString()}`, {
+        method: "PUT"
+      })
+      .then(async res => {
+        const data = await res.json();
+        if (res.ok) {
+          result.textContent = "✅ Dish updated successfully!";
+          result.style.color = "green";
+        } else {
+          result.textContent = `❌ ${data.error || "Update failed."}`;
+          result.style.color = "red";
+        }
+      })
+      .catch(err => {
+        console.error(err);
+        result.textContent = "❌ Network error.";
+        result.style.color = "red";
+      });
+    }
+  </script>
+</body>
+</html>

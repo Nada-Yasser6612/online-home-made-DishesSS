@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Admin Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+      overflow-y: auto;
+    }
+
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 40px 20px;
+      min-height: 100vh;
+    }
+
+    .container {
+      background: #ffffffee;
+      border-radius: 24px;
+      padding: 35px;
+      width: 100%;
+      max-width: 1000px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+      z-index: 1;
+      backdrop-filter: blur(20px);
+    }
+
+    h2 {
+      font-size: 2.2rem;
+      margin-bottom: 15px;
+      color: #333;
+      text-align: center;
+    }
+
+    p {
+      font-size: 1rem;
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    .actions {
+      display: flex;
+      justify-content: center;
+      gap: 15px;
+      flex-wrap: wrap;
+      margin-bottom: 25px;
+    }
+
+    button {
+      padding: 12px 24px;
+      border-radius: 40px;
+      border: none;
+      background: linear-gradient(to right, #ff6f91, #845ec2);
+      color: #fff;
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      transition: 0.3s ease;
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+      background: linear-gradient(to right, #845ec2, #ff6f91);
+    }
+
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      margin-top: 20px;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    th, td {
+      padding: 12px 14px;
+      text-align: left;
+      border-bottom: 1px solid #ddd;
+    }
+
+    thead {
+      background: linear-gradient(to right, #ff6f91, #845ec2);
+      color: white;
+    }
+
+    tbody tr:hover {
+      background-color: #fff0f6;
+    }
+
+    td {
+      word-break: break-word;
+      max-width: 150px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2 id="welcomeMessage">Welcome, Admin!</h2>
+    <p>ID: <span id="adminId"></span></p>
+
+    <div class="actions">
+      <button onclick="goToCreateRep()">➕ Add Dishes Representative</button>
+      <button onclick="loadCustomers()">👥 View All Customers</button>
+      <button onclick="loadReps()">🍽️ View All Reps</button>
+    </div>
+
+    <!-- Customers Table -->
+    <table id="customerTable" style="display: none;">
+      <thead>
+        <tr>
+          <th>User ID</th>
+          <th>Username</th>
+          <th>Email</th>
+          <th>Phone</th>
+          <th>Address</th>
+          <th>Card Number</th>
+          <th>Expire Date</th>
+        </tr>
+      </thead>
+      <tbody id="customerBody"></tbody>
+    </table>
+
+    <!-- Reps Table -->
+    <table id="repTable" style="display: none;">
+      <thead>
+        <tr>
+          <th>Rep ID</th>
+          <th>Username</th>
+          <th>Email</th>
+          <th>Phone</th>
+          <th>Address</th>
+          <th>Minimum Charge</th>
+        </tr>
+      </thead>
+      <tbody id="repBody"></tbody>
+    </table>
+  </div>
+
+  <script>
+    const adminId = localStorage.getItem("adminId");
+    const adminUsername = localStorage.getItem("adminUsername");
+
+    if (!adminId) {
+      alert("No admin session found. Please log in again.");
+      window.location.href = "login.html";
+    } else {
+      document.getElementById("adminId").textContent = adminId;
+      document.getElementById("welcomeMessage").textContent = `Welcome, ${adminUsername || "Admin"}!`;
+    }
+
+    function goToCreateRep() {
+      window.location.href = "create-reps.html";
+    }
+
+    function loadCustomers() {
+      fetch("http://localhost:8080/ejb-rest-app-1.0/api/admin/customers", {
+        headers: { "X-User-Id": adminId }
+      })
+      .then(res => res.json())
+      .then(data => {
+        const table = document.getElementById("customerTable");
+        const body = document.getElementById("customerBody");
+        table.style.display = "table";
+        document.getElementById("repTable").style.display = "none";
+        body.innerHTML = data.map(c => `
+          <tr>
+            <td>${c.id}</td>
+            <td>${c.username}</td>
+            <td>${c.email}</td>
+            <td>${c.phone}</td>
+            <td>${c.address}</td>
+            <td>${c.cardNumber}</td>
+            <td>${c.expireDate}</td>
+          </tr>`).join('');
+      })
+      .catch(err => alert("Failed to load customers: " + err.message));
+    }
+
+    function loadReps() {
+      fetch("http://localhost:8080/ejb-rest-app-1.0/api/admin/reps", {
+        headers: { "X-User-Id": adminId }
+      })
+      .then(res => res.json())
+      .then(data => {
+        const table = document.getElementById("repTable");
+        const body = document.getElementById("repBody");
+        table.style.display = "table";
+        document.getElementById("customerTable").style.display = "none";
+        body.innerHTML = data.map(rep => `
+          <tr>
+            <td>${rep.repId}</td>
+            <td>${rep.username}</td>
+            <td>${rep.email}</td>
+            <td>${rep.phone}</td>
+            <td>${rep.address}</td>
+            <td>${rep.minimumCharge}</td>
+          </tr>`).join('');
+      })
+      .catch(err => alert("Failed to load representatives: " + err.message));
+    }
+  </script>
+</body>
+</html>

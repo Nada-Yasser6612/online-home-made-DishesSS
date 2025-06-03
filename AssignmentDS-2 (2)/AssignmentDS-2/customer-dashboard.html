@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Customer Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
+
+    html, body {
+      margin: 0; padding: 0; height: 100%;
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+      overflow-y: auto;
+    }
+
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 40px 20px;
+      min-height: 100vh;
+    }
+
+    .container {
+      background: #ffffffee;
+      border-radius: 24px;
+      padding: 35px;
+      width: 100%;
+      max-width: 600px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+      z-index: 1;
+      backdrop-filter: blur(20px);
+      text-align: center;
+    }
+
+    h2 {
+      font-size: 2.2rem;
+      margin-bottom: 15px;
+      color: #333;
+    }
+
+    p {
+      font-size: 1rem;
+      margin-bottom: 30px;
+      color: #555;
+    }
+
+    button {
+      padding: 15px 30px;
+      font-size: 1.2rem;
+      font-weight: 600;
+      color: white;
+      border: none;
+      border-radius: 40px;
+      background: linear-gradient(to right, #ff6f91, #845ec2);
+      cursor: pointer;
+      box-shadow: 0 5px 15px rgba(255,111,145,0.6);
+      transition: background 0.3s ease, transform 0.3s ease;
+      margin: 10px 0;
+    }
+
+    button:hover {
+      background: linear-gradient(to right, #845ec2, #ff6f91);
+      transform: translateY(-3px);
+    }
+
+    #orders {
+      text-align: left;
+      margin-top: 20px;
+      background: #fff;
+      padding: 20px;
+      border-radius: 15px;
+      box-shadow: 0 0 12px rgba(0,0,0,0.1);
+    }
+
+    #orders h3 {
+      margin-top: 0;
+    }
+
+    .order {
+      border-bottom: 1px solid #ddd;
+      padding: 8px 0;
+    }
+
+    .order:last-child {
+      border-bottom: none;
+    }
+
+    .order span {
+      display: block;
+      font-size: 0.95rem;
+      color: #444;
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+  <h2>Welcome, <span id="customerUsername">Customer</span>!</h2>
+  <p>Your ID: <span id="customerId">N/A</span></p>
+
+  <button onclick="goToCreateOrder()">🛒 Make New Order</button>
+  <button onclick="viewPastOrders()">📜 View My Orders</button>
+
+  <div id="orders" style="display:none;">
+    <h3>🟡 Current Orders (Pending)</h3>
+    <div id="currentOrders"></div>
+
+    <h3>✅ Past Orders (Confirmed)</h3>
+    <div id="pastOrders"></div>
+
+    <h3>❌ Rejected Orders</h3>
+    <div id="rejectedOrders"></div>
+  </div>
+</div>
+<script>
+const customerId = localStorage.getItem("customerId");
+const customerUsername = localStorage.getItem("customerUsername") || "Customer";
+
+// Show customer info or redirect if not logged in
+if (!customerId) {
+  alert("No customer session found. Please log in again.");
+  window.location.href = "login.html";
+} else {
+  document.getElementById("customerId").textContent = customerId;
+  document.getElementById("customerUsername").textContent = customerUsername;
+}
+
+const validatedOrders = new Set();
+
+function goToCreateOrder() {
+  window.location.href = "create-order.html";
+}
+
+function viewPastOrders() {
+  const ordersDiv = document.getElementById("orders");
+  const currentOrders = document.getElementById("currentOrders");
+  const pastOrders = document.getElementById("pastOrders");
+  let rejectedOrders = document.getElementById("rejectedOrders");
+
+  if (!rejectedOrders) {
+    rejectedOrders = document.createElement("div");
+    rejectedOrders.id = "rejectedOrders";
+    const rejectedHeader = document.createElement("h3");
+    rejectedHeader.textContent = "❌ Rejected Orders";
+    ordersDiv.appendChild(rejectedHeader);
+    ordersDiv.appendChild(rejectedOrders);
+  }
+
+  ordersDiv.style.display = "block";
+  currentOrders.innerHTML = "<p>Loading...</p>";
+  pastOrders.innerHTML = "";
+  rejectedOrders.innerHTML = "";
+
+  fetch(`http://localhost:8082/api/orders/customer/${customerId}`)
+    .then(res => res.json())
+    .then(data => {
+      if (!Array.isArray(data) || data.length === 0) {
+        currentOrders.innerHTML = "<p>No current orders.</p>";
+        pastOrders.innerHTML = "<p>No past orders.</p>";
+        rejectedOrders.innerHTML = "<p>No rejected orders.</p>";
+        return;
+      }
+
+      currentOrders.innerHTML = "";
+      pastOrders.innerHTML = "";
+      rejectedOrders.innerHTML = "";
+
+      data.forEach(order => {
+        const div = document.createElement("div");
+        div.className = "order";
+
+        const date = order.timestamp
+          ? new Date(order.timestamp).toLocaleString()
+          : getRandomFakeDate();
+
+        let dishesHtml = "";
+        if (Array.isArray(order.orderDishes)) {
+          dishesHtml += `<span><strong>Dishes:</strong></span>`;
+          order.orderDishes.forEach(dish => {
+            dishesHtml += `<span style="margin-left: 15px;">• ${dish.dishName} (x${dish.quantity})</span>`;
+          });
+        }
+
+        div.innerHTML = `
+          <span><strong>Order ID:</strong> ${order.id}</span>
+          <span><strong>Total:</strong> ${order.totalAmount}</span>
+          <span><strong>Status:</strong> ${order.status}</span>
+          <span><strong>Placed On:</strong> ${date}</span>
+          ${dishesHtml}
+        `;
+
+        if (order.status === "PENDING") {
+          // Immediately trigger validation for pending order
+          if (!validatedOrders.has(order.id)) {
+            validatedOrders.add(order.id);
+            validateOrder(order.id);
+          }
+          currentOrders.appendChild(div);
+        } else if (order.status === "REJECTED") {
+          rejectedOrders.appendChild(div);
+        } else if (order.status === "CONFIRMED") {
+          pastOrders.appendChild(div);
+        }
+      });
+
+      if (currentOrders.innerHTML === "") currentOrders.innerHTML = "<p>No current orders.</p>";
+      if (pastOrders.innerHTML === "") pastOrders.innerHTML = "<p>No past orders.</p>";
+      if (rejectedOrders.innerHTML === "") rejectedOrders.innerHTML = "<p>No rejected orders.</p>";
+    })
+    .catch(err => {
+      console.error(err);
+      currentOrders.innerHTML = "<p>❌ Failed to load orders.</p>";
+      pastOrders.innerHTML = "";
+      rejectedOrders.innerHTML = "";
+    });
+}
+
+// ✅ Immediately trigger RabbitMQ validation
+function validateOrder(orderId) {
+  fetch("http://localhost:8083/api/payment/validate", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ orderId })
+  })
+    .then(res => res.text())
+    .then(result => {
+      console.log(`✅ Validation result for Order ${orderId}:`, result);
+      // Re-fetch to get updated status
+      setTimeout(viewPastOrders, 5000); // Slight delay to allow DB update
+    })
+    .catch(err => {
+      console.error(`❌ Validation failed for Order ${orderId}:`, err);
+    });
+}
+
+function getRandomFakeDate() {
+  const now = new Date();
+  const daysAgo = Math.floor(Math.random() * 7);
+  const fakeDate = new Date(now);
+  fakeDate.setDate(now.getDate() - daysAgo);
+  return fakeDate.toLocaleString();
+}
+</script>
+
+</body>
+</html>

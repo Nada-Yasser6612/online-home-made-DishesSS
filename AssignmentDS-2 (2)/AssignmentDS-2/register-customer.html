@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Register as Customer</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+      overflow-y: auto;
+      box-sizing: border-box;
+    }
+
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 40px 20px;
+      min-height: 100vh;
+      position: relative;
+    }
+
+    body::before, body::after {
+      content: '';
+      position: fixed;
+      border-radius: 50%;
+      opacity: 0.15;
+      filter: blur(80px);
+      animation: float 6s ease-in-out infinite alternate;
+      z-index: 0;
+    }
+    body::before {
+      width: 250px;
+      height: 250px;
+      background: #ff6f91;
+      top: 10%;
+      left: 5%;
+    }
+    body::after {
+      width: 350px;
+      height: 350px;
+      background: #845ec2;
+      bottom: 10%;
+      right: 5%;
+    }
+    @keyframes float {
+      0% { transform: translateY(0); }
+      100% { transform: translateY(30px); }
+    }
+
+    .container {
+      position: relative;
+      background: #ffffffdd;
+      border-radius: 28px;
+      padding: 40px 30px;
+      width: 100%;
+      max-width: 420px;
+      max-height: calc(100vh - 80px);
+      overflow-y: auto;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+      z-index: 1;
+      backdrop-filter: saturate(180%) blur(20px);
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    h2 {
+      font-weight: 600;
+      font-size: 2rem;
+      margin-bottom: 25px;
+      color: #333;
+      text-align: center;
+      letter-spacing: 1.1px;
+      text-transform: uppercase;
+      text-shadow: 0 1px 2px #fcb69f;
+      word-break: break-word;
+    }
+
+    input[type="text"],
+    input[type="email"],
+    input[type="password"] {
+      width: 100%;
+      padding: 14px 20px;
+      margin-bottom: 20px;
+      border: none;
+      border-radius: 50px;
+      background: #fff;
+      box-shadow: inset 2px 2px 5px #f0f0f0,
+                  inset -2px -2px 5px #d1d9e6;
+      font-size: 1rem;
+      transition: all 0.3s ease;
+      outline: none;
+      box-sizing: border-box;
+    }
+
+    input[type="text"]:focus,
+    input[type="email"]:focus,
+    input[type="password"]:focus {
+      box-shadow:
+        inset 4px 4px 8px #e9e9ff,
+        inset -4px -4px 8px #ffffff;
+      background: #fefefe;
+      transform: scale(1.02);
+    }
+
+    button {
+      width: 100%;
+      padding: 16px 0;
+      border-radius: 50px;
+      border: none;
+      background: linear-gradient(45deg, #ff6f91, #845ec2);
+      color: white;
+      font-weight: 700;
+      font-size: 1.2rem;
+      letter-spacing: 1.2px;
+      cursor: pointer;
+      box-shadow: 0 5px 15px rgba(255,111,145,0.6);
+      transition: all 0.4s ease;
+      margin-top: 10px;
+    }
+
+    button:hover {
+      background: linear-gradient(45deg, #845ec2, #ff6f91);
+      box-shadow: 0 8px 24px rgba(132,94,194,0.8);
+      transform: translateY(-3px);
+    }
+
+    #result {
+      margin-top: 18px;
+      font-weight: 600;
+      text-align: center;
+      min-height: 28px;
+      font-size: 1rem;
+      color: #d8000c;
+      user-select: none;
+    }
+
+    .link {
+      display: block;
+      margin-top: 18px;
+      font-size: 1rem;
+      color: #7a4ea3;
+      text-align: center;
+      text-decoration: none;
+      font-weight: 600;
+      letter-spacing: 0.7px;
+      transition: color 0.3s ease;
+      user-select: none;
+      word-break: break-word;
+    }
+
+    .link:hover {
+      color: #d86c9b;
+      text-decoration: underline;
+    }
+
+    @media (max-width: 450px) {
+      .container {
+        padding: 30px 20px;
+      }
+      h2 {
+        font-size: 1.7rem;
+      }
+      button {
+        font-size: 1rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Register as Customer</h2>
+
+    <input type="text" id="username" placeholder="Username" required>
+    <input type="email" id="email" placeholder="Email" required>
+    <input type="password" id="password" placeholder="Password" required>
+    <input type="text" id="address" placeholder="Address">
+    <input type="text" id="phone" placeholder="Phone">
+    <input type="text" id="cardNumber" placeholder="Card Number">
+    <input type="text" id="expireDate" placeholder="Expire Date (MM/YY)">
+
+    <button onclick="registerCustomer()">Register</button>
+
+    <p id="result"></p>
+
+<a class="link" href="login.html">Already have an account? Log in as customer, admin, or dishes’ seller.</a>
+  </div>
+
+  <script>
+    function registerCustomer() {
+      const data = {
+        username: document.getElementById("username").value,
+        email: document.getElementById("email").value,
+        password: document.getElementById("password").value,
+        address: document.getElementById("address").value,
+        phone: document.getElementById("phone").value,
+        cardNumber: document.getElementById("cardNumber").value,
+        expireDate: document.getElementById("expireDate").value
+      };
+
+      fetch("http://localhost:8080/ejb-rest-app-1.0/api/customers/register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(data)
+      })
+        .then(res => res.text())
+        .then(text => {
+          const result = document.getElementById("result");
+          if (text.startsWith("✅")) {
+            result.style.color = "green";
+            result.textContent = text;
+          } else {
+            result.style.color = "red";
+            result.textContent = text;
+          }
+        })
+        .catch(err => {
+          document.getElementById("result").textContent = "❌ Error: " + err.message;
+        });
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Test Payment Failure</title>
+</head>
+<body>
+    <h1>Trigger PaymentFailedEvent</h1>
+    <button onclick="triggerFailure()">Send Test Event</button>
+
+    <p id="result"></p>
+
+    <script>
+        function triggerFailure() {
+            fetch('http://localhost:8083/api/payment/test-payment-failure')
+                .then(response => response.text())
+                .then(data => {
+                    document.getElementById('result').innerText = '✅ Event Sent: ' + data;
+                })
+                .catch(error => {
+                    document.getElementById('result').innerText = '❌ Error: ' + error;
+                });
+        }
+    </script>
+</body>
+</html>
